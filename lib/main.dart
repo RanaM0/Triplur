@@ -5,13 +5,6 @@ import 'package:webview_flutter/webview_flutter.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 void main() {
-  WidgetsFlutterBinding.ensureInitialized();
-  SystemChrome.setSystemUIOverlayStyle(
-    const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.dark,
-    ),
-  );
   runApp(const MyApp());
 }
 
@@ -24,7 +17,7 @@ class MyApp extends StatelessWidget {
       title: 'Triplur',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Color(0xFF68BDA7)),
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF68BDA7)),
         appBarTheme: const AppBarTheme(
           titleTextStyle: TextStyle(
             color: Colors.white,
@@ -32,8 +25,6 @@ class MyApp extends StatelessWidget {
             fontSize: 20,
           ),
           iconTheme: IconThemeData(color: Colors.white),
-          backgroundColor: Colors.transparent,
-          elevation: 0,
         ),
       ),
       home: const SplashScreen(),
@@ -137,79 +128,70 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.dark,
-      ),
-      child: WillPopScope(
-        onWillPop: () async {
-          if (_currentIndex != 0) {
+    return WillPopScope(
+      onWillPop: () async {
+        if (_currentIndex != 0) {
+          setState(() {
+            _currentIndex = 0;
+          });
+          return false;
+        }
+        return true;
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(_titles[_currentIndex]),
+          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: () {
+                _webViewKeys[_currentIndex].currentState?.reloadWebView();
+              },
+            ),
+          ],
+        ),
+        body: WebViewWithLoader(
+          key: _webViewKeys[_currentIndex],
+          url: _urls[_currentIndex],
+        ),
+        bottomNavigationBar: BottomNavigationBar(
+          currentIndex: _currentIndex,
+          onTap: (index) {
             setState(() {
-              _currentIndex = 0;
+              _currentIndex = index;
             });
-            return false;
-          }
-          return true;
-        },
-        child: Scaffold(
-          extendBodyBehindAppBar: true,
-          appBar: AppBar(
-            title: Text(_titles[_currentIndex]),
-            backgroundColor:
-            Theme.of(context).colorScheme.inversePrimary.withOpacity(0.9),
-            elevation: 0,
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.refresh),
-                onPressed: () {
-                  _webViewKeys[_currentIndex].currentState?.reloadWebView();
-                },
+          },
+          type: BottomNavigationBarType.fixed,
+          items: [
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.home),
+              label: 'Home',
+            ),
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.airplane_ticket),
+              label: 'Packages',
+            ),
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.directions_car),
+              label: 'Cab',
+            ),
+            BottomNavigationBarItem(
+              icon: SvgPicture.asset(
+                'assets/kaaba.svg',
+                height: 24,
+                width: 24,
+                colorFilter: _currentIndex == 3
+                    ? const ColorFilter.mode(Color(0xFF006b4f), BlendMode.srcIn)
+                    : const ColorFilter.mode(Color(0xFF5F6368), BlendMode.srcIn),
               ),
-            ],
-          ),
-          body: WebViewWithLoader(
-            key: _webViewKeys[_currentIndex],
-            url: _urls[_currentIndex],
-          ),
-          bottomNavigationBar: BottomNavigationBar(
-            currentIndex: _currentIndex,
-            onTap: (index) {
-              setState(() {
-                _currentIndex = index;
-              });
-            },
-            type: BottomNavigationBarType.fixed,
-            items: [
-              const BottomNavigationBarItem(
-                icon: Icon(Icons.home),
-                label: 'Home',
-              ),
-              const BottomNavigationBarItem(
-                icon: Icon(Icons.airplane_ticket),
-                label: 'Packages',
-              ),
-              const BottomNavigationBarItem(
-                icon: Icon(Icons.directions_car),
-                label: 'Cab',
-              ),
-              BottomNavigationBarItem(
-                icon: SvgPicture.asset(
-                  'assets/kaaba.svg',
-                  height: 24,
-                  width: 24,
-                  colorFilter: _currentIndex == 3
-                      ? const ColorFilter.mode(Color(0xFF006b4f), BlendMode.srcIn)
-                      : const ColorFilter.mode(Color(0xFF5F6368), BlendMode.srcIn),
-                ),
-                label: 'Pilgrimage',
-              ),
-              const BottomNavigationBarItem(
-                icon: Icon(Icons.contact_mail),
-                label: 'Contact',
-              ),
-            ],
-          ),
+              label: 'Pilgrimage',
+            ),
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.contact_mail),
+              label: 'Contact',
+            ),
+          ],
         ),
       ),
     );
@@ -237,7 +219,9 @@ class _WebViewWithLoaderState extends State<WebViewWithLoader> {
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setNavigationDelegate(
         NavigationDelegate(
-          onPageStarted: (_) => setState(() => _isLoading = true),
+          onPageStarted: (_) {
+            setState(() => _isLoading = true);
+          },
           onPageFinished: (_) async {
             setState(() => _isLoading = false);
             await _controller.runJavaScript('''
@@ -247,7 +231,9 @@ class _WebViewWithLoaderState extends State<WebViewWithLoader> {
               document.querySelector('.site-footer')?.style.display = 'none';
             ''');
           },
-          onWebResourceError: (_) => setState(() => _isLoading = false),
+          onWebResourceError: (_) {
+            setState(() => _isLoading = false);
+          },
         ),
       )
       ..loadRequest(Uri.parse(widget.url));
