@@ -2,8 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.dark,
+    ),
+  );
   runApp(const MyApp());
 }
 
@@ -24,6 +32,8 @@ class MyApp extends StatelessWidget {
             fontSize: 20,
           ),
           iconTheme: IconThemeData(color: Colors.white),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
         ),
       ),
       home: const SplashScreen(),
@@ -104,59 +114,103 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
 
-  final List<Widget> _screens = [
-    const HomeScreen(),
-    const PackagesScreen(),
-    const CabScreen(),
-    const PilgrimageScreen(),
-    const ContactScreen(),
-  ];
-  final List<String> _appBarTitles = [
+  final List<GlobalKey<_WebViewWithLoaderState>> _webViewKeys = List.generate(
+    5,
+        (_) => GlobalKey<_WebViewWithLoaderState>(),
+  );
+
+  final List<String> _titles = [
     'Home',
     'Packages',
     'Cab',
     'Pilgrimage',
-    'Contact Us'
+    'Contact Us',
+  ];
+
+  final List<String> _urls = [
+    'https://www.triplur.co.uk',
+    'https://www.triplur.co.uk/tour-packages/',
+    'https://triplur.co.uk/book-a-cab/',
+    'https://triplur.co.uk/umrah-packages/',
+    'https://triplur.co.uk/contact-us/',
   ];
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(_appBarTitles[_currentIndex]),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
       ),
-      body: _screens[_currentIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
+      child: WillPopScope(
+        onWillPop: () async {
+          if (_currentIndex != 0) {
+            setState(() {
+              _currentIndex = 0;
+            });
+            return false;
+          }
+          return true;
         },
-        type: BottomNavigationBarType.fixed,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
+        child: Scaffold(
+          extendBodyBehindAppBar: true,
+          appBar: AppBar(
+            title: Text(_titles[_currentIndex]),
+            backgroundColor:
+            Theme.of(context).colorScheme.inversePrimary.withOpacity(0.9),
+            elevation: 0,
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.refresh),
+                onPressed: () {
+                  _webViewKeys[_currentIndex].currentState?.reloadWebView();
+                },
+              ),
+            ],
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.airplane_ticket),
-            label: 'Packages',
+          body: WebViewWithLoader(
+            key: _webViewKeys[_currentIndex],
+            url: _urls[_currentIndex],
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.directions_car),
-            label: 'Cab',
+          bottomNavigationBar: BottomNavigationBar(
+            currentIndex: _currentIndex,
+            onTap: (index) {
+              setState(() {
+                _currentIndex = index;
+              });
+            },
+            type: BottomNavigationBarType.fixed,
+            items: [
+              const BottomNavigationBarItem(
+                icon: Icon(Icons.home),
+                label: 'Home',
+              ),
+              const BottomNavigationBarItem(
+                icon: Icon(Icons.airplane_ticket),
+                label: 'Packages',
+              ),
+              const BottomNavigationBarItem(
+                icon: Icon(Icons.directions_car),
+                label: 'Cab',
+              ),
+              BottomNavigationBarItem(
+                icon: SvgPicture.asset(
+                  'assets/kaaba.svg',
+                  height: 24,
+                  width: 24,
+                  colorFilter: _currentIndex == 3
+                      ? const ColorFilter.mode(Color(0xFF006b4f), BlendMode.srcIn)
+                      : const ColorFilter.mode(Color(0xFF5F6368), BlendMode.srcIn),
+                ),
+                label: 'Pilgrimage',
+              ),
+              const BottomNavigationBarItem(
+                icon: Icon(Icons.contact_mail),
+                label: 'Contact',
+              ),
+            ],
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.temple_hindu),
-            label: 'Pilgrimage',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.contact_mail),
-            label: 'Contact',
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -164,6 +218,7 @@ class _MainScreenState extends State<MainScreen> {
 
 class WebViewWithLoader extends StatefulWidget {
   final String url;
+
   const WebViewWithLoader({super.key, required this.url});
 
   @override
@@ -182,13 +237,9 @@ class _WebViewWithLoaderState extends State<WebViewWithLoader> {
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setNavigationDelegate(
         NavigationDelegate(
-          onPageStarted: (_) {
-            setState(() => _isLoading = true);
-          },
+          onPageStarted: (_) => setState(() => _isLoading = true),
           onPageFinished: (_) async {
             setState(() => _isLoading = false);
-
-            // Hide headers/footers with JS
             await _controller.runJavaScript('''
               document.querySelector('header')?.style.display = 'none';
               document.querySelector('footer')?.style.display = 'none';
@@ -196,12 +247,14 @@ class _WebViewWithLoaderState extends State<WebViewWithLoader> {
               document.querySelector('.site-footer')?.style.display = 'none';
             ''');
           },
-          onWebResourceError: (_) {
-            setState(() => _isLoading = false);
-          },
+          onWebResourceError: (_) => setState(() => _isLoading = false),
         ),
       )
       ..loadRequest(Uri.parse(widget.url));
+  }
+
+  void reloadWebView() {
+    _controller.reload();
   }
 
   @override
@@ -231,50 +284,5 @@ class _WebViewWithLoaderState extends State<WebViewWithLoader> {
         ],
       ),
     );
-  }
-}
-
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const WebViewWithLoader(url: 'https://www.triplur.co.uk');
-  }
-}
-
-class PackagesScreen extends StatelessWidget {
-  const PackagesScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const WebViewWithLoader(url: 'https://www.triplur.co.uk/tour-packages/');
-  }
-}
-
-class CabScreen extends StatelessWidget {
-  const CabScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const WebViewWithLoader(url: 'https://triplur.co.uk/book-a-cab/');
-  }
-}
-
-class PilgrimageScreen extends StatelessWidget {
-  const PilgrimageScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const WebViewWithLoader(url: 'https://triplur.co.uk/umrah-packages/');
-  }
-}
-
-class ContactScreen extends StatelessWidget {
-  const ContactScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const WebViewWithLoader(url: 'https://triplur.co.uk/contact-us/');
   }
 }
