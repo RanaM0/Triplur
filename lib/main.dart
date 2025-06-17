@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter/services.dart';
 
 void main() {
   runApp(const MyApp());
@@ -219,6 +221,40 @@ class _WebViewWithLoaderState extends State<WebViewWithLoader> {
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setNavigationDelegate(
         NavigationDelegate(
+          onNavigationRequest: (NavigationRequest request) async {
+            final url = request.url;
+
+            Future<void> _launchDialer(String number) async {
+              const platform = MethodChannel('com.triplur/dialer');
+              try {
+                await platform.invokeMethod('openDialer', {'number': number});
+              } on PlatformException catch (e) {
+                debugPrint("Failed to open dialer: '${e.message}'.");
+              }
+            }
+
+            if (url.startsWith("whatsapp://") || url.contains("wa.me") || url.contains("web.whatsapp.com")) {
+              if (await canLaunchUrl(Uri.parse(url))) {
+                await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+              }
+              else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Could not open WhatsApp.")),
+                );
+              }
+              return NavigationDecision.prevent;
+            }
+
+
+
+            else if (url.startsWith("tel:")) {
+              final number = url.replaceFirst('tel:', '');
+              await _launchDialer(number);
+              return NavigationDecision.prevent;
+            }
+
+            return NavigationDecision.navigate;
+          },
           onPageStarted: (_) {
             setState(() => _isLoading = true);
           },
