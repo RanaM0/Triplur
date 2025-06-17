@@ -115,16 +115,16 @@ class _MainScreenState extends State<MainScreen> {
   final List<String> _titles = [
     'Home',
     'Packages',
-    'Cab',
-    'Pilgrimage',
+    'Book a Ride',
+    // 'Pilgrimage',
     'Contact Us',
   ];
 
   final List<String> _urls = [
     'https://www.triplur.co.uk',
     'https://www.triplur.co.uk/tour-packages/',
-    'https://triplur.co.uk/book-a-cab/',
-    'https://triplur.co.uk/umrah-packages/',
+    'https://triplur.co.uk/book-a-ride/',
+    // 'https://triplur.co.uk/umrah-packages/',
     'https://triplur.co.uk/contact-us/',
   ];
 
@@ -176,19 +176,19 @@ class _MainScreenState extends State<MainScreen> {
             ),
             const BottomNavigationBarItem(
               icon: Icon(Icons.directions_car),
-              label: 'Cab',
+              label: 'Ride',
             ),
-            BottomNavigationBarItem(
-              icon: SvgPicture.asset(
-                'assets/kaaba.svg',
-                height: 24,
-                width: 24,
-                colorFilter: _currentIndex == 3
-                    ? const ColorFilter.mode(Color(0xFF006b4f), BlendMode.srcIn)
-                    : const ColorFilter.mode(Color(0xFF5F6368), BlendMode.srcIn),
-              ),
-              label: 'Pilgrimage',
-            ),
+            // BottomNavigationBarItem(
+            //   icon: SvgPicture.asset(
+            //     'assets/kaaba.svg',
+            //     height: 24,
+            //     width: 24,
+            //     colorFilter: _currentIndex == 3
+            //         ? const ColorFilter.mode(Color(0xFF006b4f), BlendMode.srcIn)
+            //         : const ColorFilter.mode(Color(0xFF5F6368), BlendMode.srcIn),
+            //   ),
+            //   label: 'Pilgrimage',
+            // ),
             const BottomNavigationBarItem(
               icon: Icon(Icons.contact_mail),
               label: 'Contact',
