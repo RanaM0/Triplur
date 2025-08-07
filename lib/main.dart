@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
 import 'package:webview_flutter/webview_flutter.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:flutter/services.dart';
 
 void main() {
   runApp(const MyApp());
@@ -114,16 +112,16 @@ class _MainScreenState extends State<MainScreen> {
 
   final List<String> _titles = [
     'Home',
-    'Packages',
-    'Book a Ride',
-    // 'Pilgrimage',
+    'Tours',
     'Contact Us',
+    // 'Pilgrimage',
+    'About',
   ];
 
   final List<String> _urls = [
     'https://www.triplur.co.uk',
     'https://www.triplur.co.uk/tour-packages/',
-    'https://triplur.co.uk/book-a-ride/',
+    'https://triplur.co.uk/about-us/',
     // 'https://triplur.co.uk/umrah-packages/',
     'https://triplur.co.uk/contact-us/',
   ];
@@ -172,11 +170,11 @@ class _MainScreenState extends State<MainScreen> {
             ),
             const BottomNavigationBarItem(
               icon: Icon(Icons.airplane_ticket),
-              label: 'Packages',
+              label: 'Tours',
             ),
             const BottomNavigationBarItem(
-              icon: Icon(Icons.directions_car),
-              label: 'Ride',
+              icon: Icon(Icons.account_circle),
+              label: 'About',
             ),
             // BottomNavigationBarItem(
             //   icon: SvgPicture.asset(
@@ -189,8 +187,8 @@ class _MainScreenState extends State<MainScreen> {
             //   ),
             //   label: 'Pilgrimage',
             // ),
-            const BottomNavigationBarItem(
-              icon: Icon(Icons.contact_mail),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.mark_unread_chat_alt_rounded),
               label: 'Contact',
             ),
           ],
